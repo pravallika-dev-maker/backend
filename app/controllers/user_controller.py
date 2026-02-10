@@ -4,13 +4,15 @@ from app.database import get_db
 from app.models.user import User as UserModel
 from app.schemas.user import User, UserCreate, UserLogin
 
+from app.services.auth import require_ceo
+
 router = APIRouter(
     prefix="/auth",
     tags=["auth"]
 )
 
 @router.post("/register", response_model=User)
-def register(user: UserCreate, db: Session = Depends(get_db)):
+def register(user: UserCreate, db: Session = Depends(get_db), current_user: UserModel = Depends(require_ceo)):
     db_user = db.query(UserModel).filter(UserModel.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already authorized")
@@ -49,8 +51,8 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
     # REQUIRE PASSWORD FOR CEO
     if user.can_add_users:
         if not user_data.password:
-            raise HTTPException(status_code=400, detail="Password is required for CEO account")
+            raise HTTPException(status_code=400, detail="Password is required for this account")
         if user.hashed_password != user_data.password:
-            raise HTTPException(status_code=401, detail="Incorrect password for CEO account")
+            raise HTTPException(status_code=401, detail="Incorrect password for this account")
             
     return {"message": "Access verified", "user": {"email": user.email, "full_name": user.full_name, "can_add_users": user.can_add_users}}

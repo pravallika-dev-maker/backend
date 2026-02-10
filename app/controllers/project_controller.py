@@ -7,6 +7,8 @@ from app.models.stage import Stage as StageModel
 from app.models.history import StageHistory as StageHistoryModel
 from app.models.resource import Resource as ResourceModel
 from app.schemas.project import Project, ProjectCreate, ProjectCreateRequest, ProjectUpdateRequest, ProjectStatusUpdate, ProjectStageSkipRequest
+from app.services.auth import get_current_user, require_ceo
+from app.models.user import User as UserModel
 import uuid
 from datetime import date
 
@@ -16,19 +18,68 @@ router = APIRouter(
 )
 
 @router.get("/", response_model=List[Project])
-def read_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    projects = db.query(ProjectModel).offset(skip).limit(limit).all()
+def read_projects(
+    skip: int = 0, 
+    limit: int = 100, 
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
+    """
+    Fetch projects with RBAC:
+    - CEO/Admin sees ALL projects
+    - Regular users see ONLY projects where they are owner OR a listed resource
+    """
+    query = db.query(ProjectModel)
+    
+    if not current_user.can_add_users:
+        # Filter for non-CEO users
+        from sqlalchemy import or_, exists
+        
+        # Subquery to check if user exists in project resources
+        resource_exists = exists().where(
+            (ResourceModel.assigned_record_id == ProjectModel.record_id) & 
+            (ResourceModel.resource_name == current_user.full_name)
+        )
+        
+        query = query.filter(
+            or_(
+                ProjectModel.project_owner_name == current_user.full_name,
+                resource_exists
+            )
+        )
+
+    projects = query.offset(skip).limit(limit).all()
     return projects
 
 @router.get("/{record_id}", response_model=Project)
-def read_project(record_id: str, db: Session = Depends(get_db)):
+def read_project(
+    record_id: str, 
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
     db_project = db.query(ProjectModel).filter(ProjectModel.record_id == record_id).first()
     if db_project is None:
         raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Check if user has permission to see this specific project
+    if not current_user.can_add_users:
+        from sqlalchemy import exists
+        resource_exists = db.query(exists().where(
+            (ResourceModel.assigned_record_id == record_id) & 
+            (ResourceModel.resource_name == current_user.full_name)
+        )).scalar()
+        
+        if db_project.project_owner_name != current_user.full_name and not resource_exists:
+            raise HTTPException(status_code=403, detail="You do not have permission to view this project")
+            
     return db_project
 
 @router.post("/", response_model=Project)
-def create_project(project_data: ProjectCreateRequest, db: Session = Depends(get_db)):
+def create_project(
+    project_data: ProjectCreateRequest, 
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(require_ceo)
+):
     """
     Create a new project with automatic stage history initialization
     """
@@ -114,7 +165,12 @@ def create_project(project_data: ProjectCreateRequest, db: Session = Depends(get
         raise HTTPException(status_code=500, detail=f"Error creating project: {str(e)}")
 
 @router.patch("/{record_id}/status", response_model=Project)
-def update_project_status(record_id: str, status_data: ProjectStatusUpdate, db: Session = Depends(get_db)):
+def update_project_status(
+    record_id: str, 
+    status_data: ProjectStatusUpdate, 
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(require_ceo)
+):
     """
     Update project deal status and execution status
     """
@@ -147,7 +203,12 @@ def update_project_status(record_id: str, status_data: ProjectStatusUpdate, db: 
         raise HTTPException(status_code=500, detail=f"Error updating project status: {str(e)}")
 
 @router.post("/{record_id}/skip-to-stage", response_model=Project)
-def skip_to_stage(record_id: str, skip_data: ProjectStageSkipRequest, db: Session = Depends(get_db)):
+def skip_to_stage(
+    record_id: str, 
+    skip_data: ProjectStageSkipRequest, 
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(require_ceo)
+):
     """
     Move or skip project to a selected stage
     """
@@ -240,7 +301,12 @@ def skip_to_stage(record_id: str, skip_data: ProjectStageSkipRequest, db: Sessio
         raise HTTPException(status_code=500, detail=f"Error moving stage: {str(e)}")
 
 @router.put("/{record_id}", response_model=Project)
-def update_project(record_id: str, project_data: ProjectUpdateRequest, db: Session = Depends(get_db)):
+def update_project(
+    record_id: str, 
+    project_data: ProjectUpdateRequest, 
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(require_ceo)
+):
     """
     Update project details including resources
     """
@@ -283,7 +349,11 @@ def update_project(record_id: str, project_data: ProjectUpdateRequest, db: Sessi
         raise HTTPException(status_code=500, detail=f"Error updating project: {str(e)}")
 
 @router.delete("/{record_id}")
-def delete_project(record_id: str, db: Session = Depends(get_db)):
+def delete_project(
+    record_id: str, 
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(require_ceo)
+):
     """
     Delete a project and its associated history/resources
     """
