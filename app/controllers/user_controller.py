@@ -35,7 +35,7 @@ def check_email(email: str, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Access not granted. Please contact the administrator."
+            detail="You do not have access. Please contact the admin for authorization."
         )
     return {"status": "authorized", "user": {"email": user.email, "full_name": user.full_name, "can_add_users": user.can_add_users}}
 
