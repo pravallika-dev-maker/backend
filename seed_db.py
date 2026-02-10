@@ -5,12 +5,12 @@ import os
 
 # Add the project root to sys.path so 'backend' package can be found
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from backend.app.database import SessionLocal, engine, Base
-from backend.app.models.project import Project
-from backend.app.models.stage import Stage
-from backend.app.models.resource import Resource
-from backend.app.models.history import StageHistory
-from backend.app.models.user import User
+from app.database import SessionLocal, engine, Base
+from app.models.project import Project
+from app.models.stage import Stage
+from app.models.resource import Resource
+from app.models.history import StageHistory
+from app.models.user import User
 
 BASE_SHEET_URL = 'https://opensheet.elk.sh/1aqZD7MbMN_EJwnjVP6bBsXvt4NB0AN_Hk4LdNXFARP0'
 

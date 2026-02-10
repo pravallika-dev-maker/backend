@@ -1,5 +1,5 @@
-from backend.app.database import SessionLocal
-from backend.app.models.project import Project
+from app.database import SessionLocal
+from app.models.project import Project
 
 db = SessionLocal()
 projects = db.query(Project).all()

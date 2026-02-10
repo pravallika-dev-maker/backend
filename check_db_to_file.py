@@ -4,9 +4,9 @@ import sys
 # Add project root to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backend.app.database import SessionLocal
-from backend.app.models.project import Project
-from backend.app.models.stage import Stage
+from app.database import SessionLocal
+from app.models.project import Project
+from app.models.stage import Stage
 
 def check():
     db = SessionLocal()

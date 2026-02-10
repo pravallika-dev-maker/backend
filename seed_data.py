@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
-from backend.app.database import SessionLocal, engine, Base
-from backend.app.models.project import Project
-from backend.app.models.stage import Stage
-from backend.app.models.resource import Resource
-from backend.app.models.history import StageHistory
-from backend.app.models.user import User
+from app.database import SessionLocal, engine, Base
+from app.models.project import Project
+from app.models.stage import Stage
+from app.models.resource import Resource
+from app.models.history import StageHistory
+from app.models.user import User
 
 def seed():
     # Create tables

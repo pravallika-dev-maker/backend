@@ -4,17 +4,24 @@ import sys
 # Add project root to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backend.app.database import SessionLocal
-from backend.app.models.project import Project
-from backend.app.models.stage import Stage
+from app.database import SessionLocal
+from app.models.project import Project
+from app.models.stage import Stage
 
 def check():
     db = SessionLocal()
-    from backend.app.database import DB_PATH
-    print(f"Checking DB at: {DB_PATH}")
-    if not os.path.exists(DB_PATH):
-        print("DB FILE NOT FOUND!")
-        return
+    db_path = None
+    try:
+        from app.database import DB_PATH
+        db_path = DB_PATH
+        print(f"Checking DB at: {db_path}")
+    except ImportError:
+        print("Using SQL database engine from config.")
+
+    if db_path and not os.path.exists(db_path):
+        print("LOCAL DB FILE NOT FOUND!")
+        # If it's a local sqlite check, we might want to return. 
+        # But if it's production, we continue with the engine check.
 
     try:
         projects = db.query(Project).all()
