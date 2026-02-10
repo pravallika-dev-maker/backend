@@ -21,6 +21,9 @@ def run_migrations():
                 print("Migration: Checking/Adding can_add_users to users...")
                 conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS can_add_users BOOLEAN DEFAULT FALSE"))
                 
+                print("Migration: Checking/Adding parent_record_id to projects...")
+                conn.execute(text("ALTER TABLE projects ADD COLUMN IF NOT EXISTS parent_record_id VARCHAR"))
+
                 print("Migration: Making hashed_password nullable in users...")
                 # For SQLite, ALTER COLUMN is tricky, but for PostgreSQL:
                 try:

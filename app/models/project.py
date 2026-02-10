@@ -16,3 +16,4 @@ class Project(Base):
     deal_status = Column(String)
     execution_status = Column(String)
     project_started_date = Column(String)
+    parent_record_id = Column(String, nullable=True)

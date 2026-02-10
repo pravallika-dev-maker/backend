@@ -5,7 +5,7 @@ import os
 
 # NOTE: Replace with your actual Supabase connection string
 # It usually looks like: postgresql://postgres.xxxx:password@aws-0-region.pooler.supabase.com:6543/postgres
-SUPABASE_URL = "postgresql://postgres:[YOUR-PASSWORD]@[YOUR-HOST]:5432/postgres"
+SUPABASE_URL = "postgresql://postgres.yibpjemrwzawgxdcnmsw:QTFoSloCe0UxEomc@aws-1-ap-south-1.pooler.supabase.com:6543/postgres"
 
 # Google Sheet URLs
 BASE_SHEET_URL = 'https://opensheet.elk.sh/1aqZD7MbMN_EJwnjVP6bBsXvt4NB0AN_Hk4LdNXFARP0'

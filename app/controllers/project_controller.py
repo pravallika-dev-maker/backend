@@ -43,13 +43,16 @@ def create_project(project_data: ProjectCreateRequest, db: Session = Depends(get
         ).first()
         
         if not starting_stage:
+            print(f"ERROR: Starting stage '{project_data.starting_stage_name}' not found")
             raise HTTPException(status_code=400, detail=f"Starting stage '{project_data.starting_stage_name}' not found")
         
-        # Determine next stage
+        # Determine next stage (using order instead of +1 for robustness)
         next_stage = db.query(StageModel).filter(
-            StageModel.stage_order == starting_stage.stage_order + 1
-        ).first()
+            StageModel.stage_order > starting_stage.stage_order
+        ).order_by(StageModel.stage_order).first()
         
+        print(f"DEBUG: Creating project with record_id={record_id}, starting_stage={starting_stage.stage_name}")
+
         # Create the project
         db_project = ProjectModel(
             record_id=record_id,
@@ -62,7 +65,8 @@ def create_project(project_data: ProjectCreateRequest, db: Session = Depends(get
             next_stage_name=next_stage.stage_name if next_stage else None,
             next_stage_expected_date=project_data.next_stage_expected_date,
             deal_status="Open",
-            execution_status="Planning"
+            execution_status="Planning",
+            parent_record_id=project_data.parent_record_id # Added field
         )
         
         db.add(db_project)

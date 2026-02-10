@@ -13,6 +13,7 @@ class ProjectBase(BaseModel):
     deal_status: Optional[str] = None
     execution_status: Optional[str] = None
     project_started_date: Optional[str] = None
+    parent_record_id: Optional[str] = None
 
 class ResourceCreateSimple(BaseModel):
     """Schema for creating a resource within a project request"""
