@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
-from backend.app.database import get_db
-from backend.app.models.stage import Stage as StageModel
-from backend.app.schemas.stage import Stage, StageCreate
+from app.database import get_db
+from app.models.stage import Stage as StageModel
+from app.schemas.stage import Stage, StageCreate
 
 router = APIRouter(
     prefix="/stages",

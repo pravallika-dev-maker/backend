@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
-from backend.app.database import get_db
-from backend.app.models.history import StageHistory as HistoryModel
-from backend.app.schemas.history import StageHistory, StageHistoryCreate
+from app.database import get_db
+from app.models.history import StageHistory as HistoryModel
+from app.schemas.history import StageHistory, StageHistoryCreate
 
 router = APIRouter(
     prefix="/history",

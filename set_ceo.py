@@ -1,4 +1,4 @@
-from backend.app.database import engine
+from app.database import engine
 from sqlalchemy import text
 import sys
 

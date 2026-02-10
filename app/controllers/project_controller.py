@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from backend.app.database import get_db
-from backend.app.models.project import Project as ProjectModel
-from backend.app.models.stage import Stage as StageModel
-from backend.app.models.history import StageHistory as StageHistoryModel
-from backend.app.models.resource import Resource as ResourceModel
-from backend.app.schemas.project import Project, ProjectCreate, ProjectCreateRequest, ProjectStatusUpdate, ProjectStageSkipRequest
+from app.database import get_db
+from app.models.project import Project as ProjectModel
+from app.models.stage import Stage as StageModel
+from app.models.history import StageHistory as StageHistoryModel
+from app.models.resource import Resource as ResourceModel
+from app.schemas.project import Project, ProjectCreate, ProjectCreateRequest, ProjectStatusUpdate, ProjectStageSkipRequest
 import uuid
 from datetime import date
 
