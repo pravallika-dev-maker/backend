@@ -32,21 +32,8 @@ def read_projects(
     query = db.query(ProjectModel)
     
     if not current_user.can_add_users:
-        # Filter for non-CEO users
-        from sqlalchemy import or_, exists
-        
-        # Subquery to check if user exists in project resources
-        resource_exists = exists().where(
-            (ResourceModel.assigned_record_id == ProjectModel.record_id) & 
-            (ResourceModel.resource_name == current_user.full_name)
-        )
-        
-        query = query.filter(
-            or_(
-                ProjectModel.project_owner_name == current_user.full_name,
-                resource_exists
-            )
-        )
+        # Filter for non-CEO users: strictly projects they own
+        query = query.filter(ProjectModel.project_owner_name == current_user.full_name)
 
     projects = query.offset(skip).limit(limit).all()
     return projects
@@ -63,13 +50,7 @@ def read_project(
     
     # Check if user has permission to see this specific project
     if not current_user.can_add_users:
-        from sqlalchemy import exists
-        resource_exists = db.query(exists().where(
-            (ResourceModel.assigned_record_id == record_id) & 
-            (ResourceModel.resource_name == current_user.full_name)
-        )).scalar()
-        
-        if db_project.project_owner_name != current_user.full_name and not resource_exists:
+        if db_project.project_owner_name != current_user.full_name:
             raise HTTPException(status_code=403, detail="You do not have permission to view this project")
             
     return db_project
@@ -78,7 +59,7 @@ def read_project(
 def create_project(
     project_data: ProjectCreateRequest, 
     db: Session = Depends(get_db),
-    current_user: UserModel = Depends(require_ceo)
+    current_user: UserModel = Depends(get_current_user)
 ):
     """
     Create a new project with automatic stage history initialization
@@ -169,7 +150,7 @@ def update_project_status(
     record_id: str, 
     status_data: ProjectStatusUpdate, 
     db: Session = Depends(get_db),
-    current_user: UserModel = Depends(require_ceo)
+    current_user: UserModel = Depends(get_current_user)
 ):
     """
     Update project deal status and execution status
@@ -190,6 +171,10 @@ def update_project_status(
     if not db_project:
         raise HTTPException(status_code=404, detail="Project not found")
     
+    # 🔐 Permission Check: CEO or Project Owner
+    if not current_user.can_add_users and db_project.project_owner_name != current_user.full_name:
+        raise HTTPException(status_code=403, detail="Permission denied. You can only update your own projects.")
+    
     # Update status fields
     db_project.deal_status = status_data.deal_status
     db_project.execution_status = status_data.execution_status
@@ -207,7 +192,7 @@ def skip_to_stage(
     record_id: str, 
     skip_data: ProjectStageSkipRequest, 
     db: Session = Depends(get_db),
-    current_user: UserModel = Depends(require_ceo)
+    current_user: UserModel = Depends(get_current_user)
 ):
     """
     Move or skip project to a selected stage
@@ -218,6 +203,10 @@ def skip_to_stage(
     db_project = db.query(ProjectModel).filter(ProjectModel.record_id == record_id).first()
     if not db_project:
         raise HTTPException(status_code=404, detail="Project not found")
+        
+    # 🔐 Permission Check: CEO or Project Owner
+    if not current_user.can_add_users and db_project.project_owner_name != current_user.full_name:
+        raise HTTPException(status_code=403, detail="Permission denied. You can only advance your own projects.")
         
     # 2. Get current stage info
     current_stage = db.query(StageModel).filter(
@@ -305,7 +294,7 @@ def update_project(
     record_id: str, 
     project_data: ProjectUpdateRequest, 
     db: Session = Depends(get_db),
-    current_user: UserModel = Depends(require_ceo)
+    current_user: UserModel = Depends(get_current_user)
 ):
     """
     Update project details including resources
@@ -313,6 +302,10 @@ def update_project(
     db_project = db.query(ProjectModel).filter(ProjectModel.record_id == record_id).first()
     if not db_project:
         raise HTTPException(status_code=404, detail="Project not found")
+    
+    # 🔐 Permission Check: CEO or Project Owner
+    if not current_user.can_add_users and db_project.project_owner_name != current_user.full_name:
+        raise HTTPException(status_code=403, detail="Permission denied. You can only edit your own projects.")
     
     # Update base fields if provided
     if project_data.client_name is not None:
@@ -352,7 +345,7 @@ def update_project(
 def delete_project(
     record_id: str, 
     db: Session = Depends(get_db),
-    current_user: UserModel = Depends(require_ceo)
+    current_user: UserModel = Depends(get_current_user)
 ):
     """
     Delete a project and its associated history/resources
@@ -360,6 +353,10 @@ def delete_project(
     db_project = db.query(ProjectModel).filter(ProjectModel.record_id == record_id).first()
     if not db_project:
         raise HTTPException(status_code=404, detail="Project not found")
+    
+    # 🔐 Permission Check: CEO or Project Owner
+    if not current_user.can_add_users and db_project.project_owner_name != current_user.full_name:
+        raise HTTPException(status_code=403, detail="Permission denied. You can only delete your own projects.")
     
     try:
         # Delete history
