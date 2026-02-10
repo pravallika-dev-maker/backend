@@ -13,7 +13,6 @@ class ProjectBase(BaseModel):
     deal_status: Optional[str] = None
     execution_status: Optional[str] = None
     project_started_date: Optional[str] = None
-    parent_record_id: Optional[str] = None
 
 class ResourceCreateSimple(BaseModel):
     """Schema for creating a resource within a project request"""
@@ -31,6 +30,15 @@ class ProjectCreateRequest(BaseModel):
     next_stage_expected_date: Optional[str] = None
     parent_record_id: Optional[str] = None
     resources: Optional[List[ResourceCreateSimple]] = []
+
+class ProjectUpdateRequest(BaseModel):
+    """Schema for updating an existing project"""
+    client_name: Optional[str] = None
+    project_owner_name: Optional[str] = None
+    deal_value: Optional[float] = None
+    project_started_date: Optional[str] = None
+    next_stage_expected_date: Optional[str] = None
+    resources: Optional[List[ResourceCreateSimple]] = None
 
 class ProjectStatusUpdate(BaseModel):
     """Schema for updating project status fields"""

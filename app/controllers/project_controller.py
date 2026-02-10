@@ -6,7 +6,7 @@ from app.models.project import Project as ProjectModel
 from app.models.stage import Stage as StageModel
 from app.models.history import StageHistory as StageHistoryModel
 from app.models.resource import Resource as ResourceModel
-from app.schemas.project import Project, ProjectCreate, ProjectCreateRequest, ProjectStatusUpdate, ProjectStageSkipRequest
+from app.schemas.project import Project, ProjectCreate, ProjectCreateRequest, ProjectUpdateRequest, ProjectStatusUpdate, ProjectStageSkipRequest
 import uuid
 from datetime import date
 
@@ -18,7 +18,6 @@ router = APIRouter(
 @router.get("/", response_model=List[Project])
 def read_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     projects = db.query(ProjectModel).offset(skip).limit(limit).all()
-    print(f"DEBUG: Found {len(projects)} projects in database")
     return projects
 
 @router.get("/{record_id}", response_model=Project)
@@ -43,16 +42,13 @@ def create_project(project_data: ProjectCreateRequest, db: Session = Depends(get
         ).first()
         
         if not starting_stage:
-            print(f"ERROR: Starting stage '{project_data.starting_stage_name}' not found")
             raise HTTPException(status_code=400, detail=f"Starting stage '{project_data.starting_stage_name}' not found")
         
-        # Determine next stage (using order instead of +1 for robustness)
+        # Determine next stage
         next_stage = db.query(StageModel).filter(
-            StageModel.stage_order > starting_stage.stage_order
-        ).order_by(StageModel.stage_order).first()
+            StageModel.stage_order == starting_stage.stage_order + 1
+        ).first()
         
-        print(f"DEBUG: Creating project with record_id={record_id}, starting_stage={starting_stage.stage_name}")
-
         # Create the project
         db_project = ProjectModel(
             record_id=record_id,
@@ -65,8 +61,7 @@ def create_project(project_data: ProjectCreateRequest, db: Session = Depends(get
             next_stage_name=next_stage.stage_name if next_stage else None,
             next_stage_expected_date=project_data.next_stage_expected_date,
             deal_status="Open",
-            execution_status="Planning",
-            parent_record_id=project_data.parent_record_id # Added field
+            execution_status="Planning"
         )
         
         db.add(db_project)
@@ -243,3 +238,71 @@ def skip_to_stage(record_id: str, skip_data: ProjectStageSkipRequest, db: Sessio
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error moving stage: {str(e)}")
+
+@router.put("/{record_id}", response_model=Project)
+def update_project(record_id: str, project_data: ProjectUpdateRequest, db: Session = Depends(get_db)):
+    """
+    Update project details including resources
+    """
+    db_project = db.query(ProjectModel).filter(ProjectModel.record_id == record_id).first()
+    if not db_project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Update base fields if provided
+    if project_data.client_name is not None:
+        db_project.client_name = project_data.client_name
+    if project_data.project_owner_name is not None:
+        db_project.project_owner_name = project_data.project_owner_name
+    if project_data.deal_value is not None:
+        db_project.deal_value = project_data.deal_value
+    if project_data.project_started_date is not None:
+        db_project.project_started_date = project_data.project_started_date
+    if project_data.next_stage_expected_date is not None:
+        db_project.next_stage_expected_date = project_data.next_stage_expected_date
+        
+    try:
+        # Handle Resources if provided
+        if project_data.resources is not None:
+            # Delete old resources
+            db.query(ResourceModel).filter(ResourceModel.assigned_record_id == record_id).delete()
+            
+            # Add new resources
+            for res_data in project_data.resources:
+                db_resource = ResourceModel(
+                    resource_name=res_data.resource_name,
+                    role=res_data.role,
+                    assigned_record_id=record_id
+                )
+                db.add(db_resource)
+        
+        db.commit()
+        db.refresh(db_project)
+        return db_project
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error updating project: {str(e)}")
+
+@router.delete("/{record_id}")
+def delete_project(record_id: str, db: Session = Depends(get_db)):
+    """
+    Delete a project and its associated history/resources
+    """
+    db_project = db.query(ProjectModel).filter(ProjectModel.record_id == record_id).first()
+    if not db_project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    try:
+        # Delete history
+        db.query(StageHistoryModel).filter(StageHistoryModel.record_id == record_id).delete()
+        
+        # Delete resources
+        db.query(ResourceModel).filter(ResourceModel.assigned_record_id == record_id).delete()
+        
+        # Delete project
+        db.delete(db_project)
+        
+        db.commit()
+        return {"message": "Project deleted successfully"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error deleting project: {str(e)}")
