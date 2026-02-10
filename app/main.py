@@ -49,18 +49,27 @@ app = FastAPI(
 import os
 
 # CORS configuration
-origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
-if "*" not in origins:
-    origins.extend([
+# Note: allow_credentials=True requires specific origins (not "*")
+raw_origins = os.getenv("ALLOWED_ORIGINS", "").split(",")
+origins = [origin.strip() for origin in raw_origins if origin.strip()]
+
+# If no specific origins provided, default to common development and wildcard (warning: wildcard + credentials won't work)
+if not origins:
+    origins = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
-    ])
+        "*" # We will handle the credentials conflict below
+    ]
+
+# If credentials are required, we cannot use "*"
+is_wildcard_origin = "*" in origins
+allow_credentials = True if not is_wildcard_origin else False
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
+    allow_origins=origins if not is_wildcard_origin else ["*"],
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
