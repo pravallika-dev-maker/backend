@@ -7,15 +7,19 @@ from sqlalchemy.orm import sessionmaker
 # Check env var first, otherwise default to Supabase
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:QTFoSloCe0UxEomc@db.yibpjemrwzawgxdcnmsw.supabase.co:5432/postgres")
 
-# SQLAlchemy requires postgresql:// instead of postgres:// (common in Railway/Heroku)
+# Fix for Railway/Heroku: SQLAlchemy requires postgresql://
 if SQLALCHEMY_DATABASE_URL and SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
+# Supabase + Railway optimization:
+# If using port 5432 (direct), it may fail on IPv6-only hosts. 
+# Using the Supabase Pooler (port 6543) is highly recommended.
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     pool_pre_ping=True,
     pool_recycle=3600,
-    connect_args={"sslmode": "require"} if "supabase" in SQLALCHEMY_DATABASE_URL or "railway" in SQLALCHEMY_DATABASE_URL else {}
+    # SSL is required for Supabase
+    connect_args={"sslmode": "require"} if "supabase" in SQLALCHEMY_DATABASE_URL else {}
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
