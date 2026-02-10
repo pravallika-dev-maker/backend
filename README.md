@@ -42,6 +42,6 @@ backend/
 The API will be available at `http://127.0.0.1:8000`. You can view the interactive documentation at `http://127.0.0.1:8000/docs`.
 
 ## Integration with Frontend
-To connect the frontend to this new backend, update `frontend/src/services/api.js` to point to `http://localhost:8000` instead of the Google Sheets URL.
+To connect the frontend to this new backend, update `frontend/src/services/api.js` to point to `https://backend-production-42b0.up.railway.app` instead of the Google Sheets URL.
 
 # backend
