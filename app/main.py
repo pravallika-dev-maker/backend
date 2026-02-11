@@ -54,14 +54,20 @@ app = FastAPI(
 
 import os
 
-# CORS configuration - NUCLEAR VERSION
-# This allows all origins, methods, and headers to bypass any browser blocking
+# CORS configuration - Robust Version
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False, # Must be False if origins is "*"
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "https://vrikshafrontend.vercel.app",
+        "https://vriksha-command-center.vercel.app",
+        "https://vrikshadashboard.vercel.app"
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-User-Email", "Accept"],
 )
 
 # Include routers
