@@ -40,6 +40,7 @@ class ProjectUpdateRequest(BaseModel):
     deal_value: Optional[float] = None
     project_started_date: Optional[str] = None
     next_stage_expected_date: Optional[str] = None
+    is_private: Optional[bool] = None
     resources: Optional[List[ResourceCreateSimple]] = None
 
 class ProjectStatusUpdate(BaseModel):

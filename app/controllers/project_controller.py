@@ -333,6 +333,10 @@ def update_project(
         db_project.project_started_date = project_data.project_started_date
     if project_data.next_stage_expected_date is not None:
         db_project.next_stage_expected_date = project_data.next_stage_expected_date
+    
+    # 🔐 Only CEO can change privacy status
+    if project_data.is_private is not None and current_user.can_add_users:
+        db_project.is_private = project_data.is_private
         
     try:
         # Handle Resources if provided
