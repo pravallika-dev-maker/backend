@@ -77,14 +77,33 @@ def send_welcome_email(user_email, user_name):
         # Attach HTML
         msg.attach(MIMEText(html, 'html'))
 
-        # Send the email
-        with smtplib.SMTP(server_host, server_port) as server:
-            server.starttls()
+        # Send the email with timeout and connection logs
+        print(f"DEBUG: Connecting to {server_host} on port {server_port}...")
+        
+        # Determine connection type based on port
+        if server_port == 465:
+            server = smtplib.SMTP_SSL(server_host, server_port, timeout=15)
+        else:
+            server = smtplib.SMTP(server_host, server_port, timeout=15)
+        
+        try:
+            if server_port != 465:
+                print("DEBUG: Starting TLS...")
+                server.starttls()
+            
+            print("DEBUG: Attempting Login...")
             server.login(username, password)
+            
+            print("DEBUG: Sending Mail Content...")
             server.sendmail(username, user_email, msg.as_string())
             
-        print(f"Welcome email successfully sent to {user_email}")
-        return True
+            print(f"SUCCESS: Welcome email successfully sent to {user_email}")
+            return True
+        finally:
+            try:
+                server.quit()
+            except:
+                pass
 
     except Exception as e:
         import traceback
