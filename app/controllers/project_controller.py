@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
@@ -9,6 +9,7 @@ from app.models.resource import Resource as ResourceModel
 from app.schemas.project import Project, ProjectCreate, ProjectCreateRequest, ProjectUpdateRequest, ProjectStatusUpdate, ProjectStageSkipRequest
 from app.services.auth import get_current_user, require_ceo
 from app.models.user import User as UserModel
+from app.services.email_service import send_project_assignment_email
 import uuid
 from datetime import date
 
@@ -59,6 +60,7 @@ def read_project(
 @router.post("/", response_model=Project)
 def create_project(
     project_data: ProjectCreateRequest, 
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
 ):
@@ -138,9 +140,21 @@ def create_project(
                 db_resource = ResourceModel(
                     resource_name=res_data.resource_name,
                     role=res_data.role,
+                    email=res_data.email,
+                    access_level=res_data.access_level or "READ",
                     assigned_record_id=record_id
                 )
                 db.add(db_resource)
+                
+                # Notify user via email if email is provided
+                if res_data.email:
+                    background_tasks.add_task(
+                        send_project_assignment_email, 
+                        res_data.email, 
+                        res_data.resource_name, 
+                        project_data.client_name, 
+                        res_data.role or "Team Member"
+                    )
         
         db.commit()
         db.refresh(db_project)

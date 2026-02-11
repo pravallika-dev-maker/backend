@@ -4,7 +4,8 @@ from app.database import get_db
 from app.models.user import User as UserModel
 from app.schemas.user import User, UserCreate, UserLogin
 
-from app.services.auth import require_ceo
+from app.services.auth import require_ceo, get_current_user
+from typing import List
 from app.services.email_service import send_welcome_email
 from fastapi import BackgroundTasks
 
@@ -12,6 +13,17 @@ router = APIRouter(
     prefix="/auth",
     tags=["auth"]
 )
+
+@router.get("/users", response_model=List[User])
+def get_all_users(
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
+    """
+    Fetch all authorized users.
+    Only authorized users can see the list (dropdown requirement).
+    """
+    return db.query(UserModel).all()
 
 @router.post("/register", response_model=User)
 def register(

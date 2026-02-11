@@ -27,6 +27,12 @@ def run_migrations():
                 print("Migration: Checking/Adding is_private to projects...")
                 conn.execute(text("ALTER TABLE projects ADD COLUMN IF NOT EXISTS is_private BOOLEAN DEFAULT FALSE"))
                 
+                print("Migration: Checking/Adding email to resources...")
+                conn.execute(text("ALTER TABLE resources ADD COLUMN IF NOT EXISTS email VARCHAR"))
+                
+                print("Migration: Checking/Adding access_level to resources...")
+                conn.execute(text("ALTER TABLE resources ADD COLUMN IF NOT EXISTS access_level VARCHAR DEFAULT 'READ'"))
+
                 print("Migration: Making hashed_password nullable in users...")
                 # For SQLite, ALTER COLUMN is tricky, but for PostgreSQL:
                 try:

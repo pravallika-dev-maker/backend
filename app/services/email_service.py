@@ -83,3 +83,54 @@ def send_welcome_email(user_email, user_name):
         print(f"CRITICAL: SendGrid email error: {str(e)}")
         print(traceback.format_exc())
         return False
+
+def send_project_assignment_email(user_email, user_name, project_name, role):
+    """
+    Sends an email to a user notifying them that they have been added to a new project.
+    """
+    print(f"DEBUG: Notifying {user_email} of project assignment: {project_name}")
+    
+    api_key = os.getenv("SENDGRID_API_KEY")
+    from_email = os.getenv("FROM_EMAIL", "pravallika@vriksha.ai")
+    frontend_url = os.getenv("FRONTEND_URL", "https://vrikshafrontend.vercel.app")
+
+    if not api_key:
+        return False
+
+    try:
+        html_content = f"""
+        <html>
+        <body style="font-family: 'Inter', sans-serif; background-color: #f0f4f0; padding: 40px;">
+            <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 24px; padding: 40px; border: 1px solid #e2e8f0;">
+                <h1 style="color: #2d3436; text-align: center;">Vriksha Project Assignment</h1>
+                <p style="font-size: 16px; color: #636e72;">Hi {user_name},</p>
+                <p style="font-size: 16px; line-height: 1.6; color: #636e72;">
+                    You have been assigned to a new project: <strong style="color: #2d3436;">{project_name}</strong>.
+                </p>
+                <div style="background: #f8fafc; padding: 20px; border-radius: 12px; margin: 20px 0;">
+                    <p style="margin: 0; color: #475569;"><strong>Role:</strong> {role}</p>
+                </div>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{frontend_url}" style="background: #81c784; color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 700;">
+                        View Project in Dashboard
+                    </a>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        message = Mail(
+            from_email=from_email,
+            to_emails=user_email,
+            subject=f'New Project Assignment: {project_name}',
+            html_content=html_content
+        )
+        
+        sg = SendGridAPIClient(api_key)
+        sg.send(message)
+        print(f"SUCCESS: Assignment email sent to {user_email}")
+        return True
+    except Exception as e:
+        print(f"ERROR: Failed to send assignment email: {e}")
+        return False

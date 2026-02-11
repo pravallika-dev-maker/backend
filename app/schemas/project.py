@@ -19,6 +19,8 @@ class ResourceCreateSimple(BaseModel):
     """Schema for creating a resource within a project request"""
     resource_name: str
     role: Optional[str] = None
+    email: Optional[str] = None
+    access_level: Optional[str] = "READ"
 
 class ProjectCreateRequest(BaseModel):
     """Schema for creating a new project"""
