@@ -1,30 +1,28 @@
 import os
 from dotenv import load_dotenv
-import resend
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 load_dotenv()
 
 def send_welcome_email(user_email, user_name):
     """
-    Sends a premium welcome email to a newly authorized user using Resend API.
+    Sends a premium welcome email to a newly authorized user using SendGrid API.
     This bypasses Railway's SMTP port restrictions by using HTTP instead.
     """
-    print(f"DEBUG: Starting Resend email process for {user_email}")
+    print(f"DEBUG: Starting SendGrid email process for {user_email}")
     
-    # Get Resend API credentials
-    api_key = os.getenv("RESEND_API_KEY")
-    from_email = os.getenv("RESEND_FROM_EMAIL", "onboarding@resend.dev")
+    # Get SendGrid API credentials from environment
+    api_key = os.getenv("SENDGRID_API_KEY")
+    from_email = os.getenv("FROM_EMAIL", "pravallika@vriksha.ai")
     frontend_url = os.getenv("FRONTEND_URL", "https://vrikshafrontend.vercel.app")
 
     if not api_key:
-        print("CRITICAL: RESEND_API_KEY not found in environment variables!")
-        print("ACTION: Add RESEND_API_KEY to your Railway Variables.")
+        print("CRITICAL: SENDGRID_API_KEY not found in environment variables!")
+        print("ACTION: Add SENDGRID_API_KEY to your Railway Variables.")
         return False
 
     try:
-        # Set the API key
-        resend.api_key = api_key
-        
         # Create the premium HTML email
         html_content = f"""
         <html>
@@ -62,24 +60,26 @@ def send_welcome_email(user_email, user_name):
         </html>
         """
 
-        print(f"DEBUG: Sending email via Resend API...")
+        print(f"DEBUG: Sending email via SendGrid API...")
         
-        # Send email using Resend
-        params = {
-            "from": from_email,
-            "to": [user_email],
-            "subject": "Vriksha Command Center - Access Granted",
-            "html": html_content,
-        }
+        # Create SendGrid message
+        message = Mail(
+            from_email=from_email,
+            to_emails=user_email,
+            subject='Vriksha Command Center - Access Granted',
+            html_content=html_content
+        )
         
-        response = resend.Emails.send(params)
+        # Initialize client and send
+        sg = SendGridAPIClient(api_key)
+        response = sg.send(message)
         
-        print(f"SUCCESS: Email sent to {user_email} via Resend!")
-        print(f"DEBUG: Resend response: {response}")
+        print(f"SUCCESS: Email sent to {user_email} via SendGrid!")
+        print(f"DEBUG: SendGrid status code: {response.status_code}")
         return True
         
     except Exception as e:
         import traceback
-        print(f"CRITICAL: Resend email error: {str(e)}")
+        print(f"CRITICAL: SendGrid email error: {str(e)}")
         print(traceback.format_exc())
         return False
