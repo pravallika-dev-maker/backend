@@ -9,3 +9,4 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String, nullable=True) # Set to nullable since we use Magic Links
     can_add_users = Column(Boolean, default=False) # True for CEO, False for others
+    access_level = Column(String, default="READ") # "READ" or "WRITE"

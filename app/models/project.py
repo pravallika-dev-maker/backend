@@ -16,3 +16,4 @@ class Project(Base):
     deal_status = Column(String)
     execution_status = Column(String)
     project_started_date = Column(String)
+    is_private = Column(Boolean, default=False)

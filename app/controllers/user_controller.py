@@ -29,7 +29,8 @@ def register(
         email=user.email,
         full_name=user.full_name,
         hashed_password=None,
-        can_add_users=user.can_add_users if user.can_add_users is not None else False
+        can_add_users=user.can_add_users if user.can_add_users is not None else False,
+        access_level=user.access_level if user.access_level is not None else "READ"
     )
     db.add(new_user)
     db.commit()
@@ -49,7 +50,7 @@ def check_email(email: str, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="You do not have access. Please contact the admin for authorization."
         )
-    return {"status": "authorized", "user": {"email": user.email, "full_name": user.full_name, "can_add_users": user.can_add_users}}
+    return {"status": "authorized", "user": {"email": user.email, "full_name": user.full_name, "can_add_users": user.can_add_users, "access_level": user.access_level}}
 
 @router.post("/login")
 def login(user_data: UserLogin, db: Session = Depends(get_db)):
@@ -67,4 +68,4 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
         if user.hashed_password != user_data.password:
             raise HTTPException(status_code=401, detail="Incorrect password for this account")
             
-    return {"message": "Access verified", "user": {"email": user.email, "full_name": user.full_name, "can_add_users": user.can_add_users}}
+    return {"message": "Access verified", "user": {"email": user.email, "full_name": user.full_name, "can_add_users": user.can_add_users, "access_level": user.access_level}}

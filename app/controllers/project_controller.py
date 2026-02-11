@@ -26,14 +26,14 @@ def read_projects(
 ):
     """
     Fetch projects with RBAC:
-    - CEO/Admin sees ALL projects
-    - Regular users see ONLY projects where they are owner OR a listed resource
+    - CEO sees ALL projects (including PRIVATE ones)
+    - Regular users (READ/WRITE) see ONLY PUBLIC projects
     """
     query = db.query(ProjectModel)
     
     if not current_user.can_add_users:
-        # Filter for non-CEO users: strictly projects they own
-        query = query.filter(ProjectModel.project_owner_name == current_user.full_name)
+        # Non-CEO users can only see public projects
+        query = query.filter(ProjectModel.is_private == False)
 
     projects = query.offset(skip).limit(limit).all()
     return projects
@@ -48,10 +48,11 @@ def read_project(
     if db_project is None:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    # Check if user has permission to see this specific project
+    # 🔐 Visibility Check:
     if not current_user.can_add_users:
-        if db_project.project_owner_name != current_user.full_name:
-            raise HTTPException(status_code=403, detail="You do not have permission to view this project")
+        # Regular users cannot see private projects
+        if db_project.is_private:
+            raise HTTPException(status_code=403, detail="Access denied. This is a private project.")
             
     return db_project
 
@@ -64,6 +65,10 @@ def create_project(
     """
     Create a new project with automatic stage history initialization
     """
+    # 🔐 Permission Check: CEO or WRITE access
+    if not current_user.can_add_users and current_user.access_level != "WRITE":
+        raise HTTPException(status_code=403, detail="Permission denied. You need WRITE access to create projects.")
+
     try:
         # Generate unique record ID
         record_id = f"P-{str(uuid.uuid4())[:8].upper()}"
@@ -93,7 +98,8 @@ def create_project(
             next_stage_name=next_stage.stage_name if next_stage else None,
             next_stage_expected_date=project_data.next_stage_expected_date,
             deal_status="Open",
-            execution_status="Planning"
+            execution_status="Planning",
+            is_private=project_data.is_private if current_user.can_add_users else False 
         )
         
         db.add(db_project)
@@ -171,9 +177,12 @@ def update_project_status(
     if not db_project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    # 🔐 Permission Check: CEO or Project Owner
-    if not current_user.can_add_users and db_project.project_owner_name != current_user.full_name:
-        raise HTTPException(status_code=403, detail="Permission denied. You can only update your own projects.")
+    # 🔐 Permission Check: CEO or WRITE access
+    if not current_user.can_add_users:
+        if current_user.access_level != "WRITE":
+            raise HTTPException(status_code=403, detail="Permission denied. You need WRITE access to update projects.")
+        if db_project.is_private:
+            raise HTTPException(status_code=403, detail="Access denied. Regular users cannot modify private projects.")
     
     # Update status fields
     db_project.deal_status = status_data.deal_status
@@ -204,9 +213,12 @@ def skip_to_stage(
     if not db_project:
         raise HTTPException(status_code=404, detail="Project not found")
         
-    # 🔐 Permission Check: CEO or Project Owner
-    if not current_user.can_add_users and db_project.project_owner_name != current_user.full_name:
-        raise HTTPException(status_code=403, detail="Permission denied. You can only advance your own projects.")
+    # 🔐 Permission Check: CEO or WRITE access
+    if not current_user.can_add_users:
+        if current_user.access_level != "WRITE":
+            raise HTTPException(status_code=403, detail="Permission denied. You need WRITE access to advance projects.")
+        if db_project.is_private:
+            raise HTTPException(status_code=403, detail="Access denied. Regular users cannot modify private projects.")
         
     # 2. Get current stage info
     current_stage = db.query(StageModel).filter(
@@ -303,9 +315,12 @@ def update_project(
     if not db_project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    # 🔐 Permission Check: CEO or Project Owner
-    if not current_user.can_add_users and db_project.project_owner_name != current_user.full_name:
-        raise HTTPException(status_code=403, detail="Permission denied. You can only edit your own projects.")
+    # 🔐 Permission Check: CEO or WRITE access
+    if not current_user.can_add_users:
+        if current_user.access_level != "WRITE":
+            raise HTTPException(status_code=403, detail="Permission denied. You need WRITE access to edit projects.")
+        if db_project.is_private:
+            raise HTTPException(status_code=403, detail="Access denied. Regular users cannot modify private projects.")
     
     # Update base fields if provided
     if project_data.client_name is not None:
@@ -354,9 +369,12 @@ def delete_project(
     if not db_project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    # 🔐 Permission Check: CEO or Project Owner
-    if not current_user.can_add_users and db_project.project_owner_name != current_user.full_name:
-        raise HTTPException(status_code=403, detail="Permission denied. You can only delete your own projects.")
+    # 🔐 Permission Check: CEO or WRITE access
+    if not current_user.can_add_users:
+        if current_user.access_level != "WRITE":
+            raise HTTPException(status_code=403, detail="Permission denied. You need WRITE access to delete projects.")
+        if db_project.is_private:
+            raise HTTPException(status_code=403, detail="Access denied. Regular users cannot modify private projects.")
     
     try:
         # Delete history

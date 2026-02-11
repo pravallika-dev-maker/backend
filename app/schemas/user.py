@@ -8,6 +8,7 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: Optional[str] = None
     can_add_users: Optional[bool] = False
+    access_level: Optional[str] = "READ"
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -16,6 +17,7 @@ class UserLogin(BaseModel):
 class User(UserBase):
     id: int
     can_add_users: bool
+    access_level: str
 
     class Config:
         from_attributes = True

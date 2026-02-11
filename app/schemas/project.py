@@ -13,6 +13,7 @@ class ProjectBase(BaseModel):
     deal_status: Optional[str] = None
     execution_status: Optional[str] = None
     project_started_date: Optional[str] = None
+    is_private: Optional[bool] = False
 
 class ResourceCreateSimple(BaseModel):
     """Schema for creating a resource within a project request"""
@@ -29,6 +30,7 @@ class ProjectCreateRequest(BaseModel):
     starting_stage_name: str
     next_stage_expected_date: Optional[str] = None
     parent_record_id: Optional[str] = None
+    is_private: Optional[bool] = False
     resources: Optional[List[ResourceCreateSimple]] = []
 
 class ProjectUpdateRequest(BaseModel):
