@@ -10,103 +10,81 @@ def send_welcome_email(user_email, user_name):
     """
     Sends a premium welcome email to a newly authorized user.
     """
-    print(f"DEBUG: Attempting to send welcome email to {user_email}")
+    print(f"DEBUG: Starting email process for {user_email}")
     
-    # Reload env to pick up latest changes (local test support)
-    load_dotenv()
-    
+    # Only load .env if NOT running on Railway to avoid overriding dashboard variables
+    if not os.getenv("RAILWAY_ENVIRONMENT"):
+        load_dotenv()
+        print("DEBUG: Local environment detected, loaded .env file.")
+
     server_host = os.getenv("SMTP_SERVER", "smtp.gmail.com")
-    server_port = int(os.getenv("SMTP_PORT", 587))
+    # Try to get port from env, but we'll try to be smart about it
+    env_port = os.getenv("SMTP_PORT")
     username = os.getenv("SMTP_USERNAME")
     password = os.getenv("SMTP_PASSWORD")
     frontend_url = os.getenv("FRONTEND_URL", "https://vrikshafrontend.vercel.app")
 
-    print(f"DEBUG: SMTP_SERVER={server_host}")
-    print(f"DEBUG: SMTP_PORT={server_port}")
-    print(f"DEBUG: SMTP_USERNAME={username}")
-    print(f"DEBUG: SMTP_PASSWORD is {'SET' if password else 'MISSING'}")
-
     if not username or not password:
-        print("CRITICAL: Email not sent - SMTP credentials MISSING in environment.")
+        print("CRITICAL: SMTP credentials missing. Check Railway Variables!")
         return False
 
-    try:
-        # Create message container
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = "Vriksha Command Center - Access Granted"
-        msg['From'] = f"Vriksha Admin <{username}>"
-        msg['To'] = user_email
+    # Define ports to try (465 is usually more successful on Railway)
+    ports_to_try = [465, 587]
+    if env_port:
+        # If user explicitly set a port, try that first
+        ports_to_try = [int(env_port)] + [p for p in [465, 587] if p != int(env_port)]
 
-        # Create the HTML body
-        html = f"""
-        <html>
-        <body style="font-family: 'Inter', sans-serif; background-color: #f0f4f0; padding: 40px; color: #2d3436;">
-            <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 24px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <h1 style="color: #2d3436; font-size: 28px; font-weight: 800; letter-spacing: -0.04em; margin: 0;">Vriksha Command Center</h1>
-                    <p style="color: #636e72; font-size: 16px; margin-top: 5px;">Internal Project & Deal Tracking System</p>
-                </div>
-                
-                <div style="margin-bottom: 30px;">
-                    <p style="font-size: 18px; font-weight: 600;">Hi {user_name},</p>
-                    <p style="font-size: 16px; line-height: 1.6; color: #636e72;">
-                        You’ve been granted access to the <b>Vriksha Command Center</b> by your CEO. 
-                        You can now track project progress, manage deals, and collaborate with the team on the dashboard.
-                    </p>
-                </div>
-
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <a href="{frontend_url}" style="background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 100%); color: #2d5a27; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block; box-shadow: 0 10px 20px rgba(129, 199, 132, 0.2);">
-                        Open Dashboard
-                    </a>
-                </div>
-
-                <div style="border-top: 1px solid #f1f5f9; padding-top: 20px; text-align: center;">
-                    <p style="font-size: 14px; color: #b2bec3;">
-                        Login using your registered email: <b>{user_email}</b>
-                    </p>
-                    <p style="font-size: 12px; color: #b2bec3; margin-top: 20px;">
-                        © 2026 Vriksha Team. All rights reserved.
-                    </p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
-
-        # Attach HTML
-        msg.attach(MIMEText(html, 'html'))
-
-        # Send the email with timeout and connection logs
-        print(f"DEBUG: Connecting to {server_host} on port {server_port}...")
-        
-        # Determine connection type based on port
-        if server_port == 465:
-            server = smtplib.SMTP_SSL(server_host, server_port, timeout=15)
-        else:
-            server = smtplib.SMTP(server_host, server_port, timeout=15)
-        
+    last_error = None
+    for port in ports_to_try:
         try:
-            if server_port != 465:
-                print("DEBUG: Starting TLS...")
+            print(f"DEBUG: Attempting connection via PORT {port}...")
+            if port == 465:
+                server = smtplib.SMTP_SSL(server_host, port, timeout=15)
+            else:
+                server = smtplib.SMTP(server_host, port, timeout=15)
                 server.starttls()
             
-            print("DEBUG: Attempting Login...")
-            server.login(username, password)
-            
-            print("DEBUG: Sending Mail Content...")
-            server.sendmail(username, user_email, msg.as_string())
-            
-            print(f"SUCCESS: Welcome email successfully sent to {user_email}")
-            return True
-        finally:
-            try:
-                server.quit()
-            except:
-                pass
+            with server:
+                print(f"DEBUG: Successfully connected to {port}. Logging in...")
+                server.login(username, password)
+                
+                # Create message
+                msg = MIMEMultipart('alternative')
+                msg['Subject'] = "Vriksha Command Center - Access Granted"
+                msg['From'] = f"Vriksha Admin <{username}>"
+                msg['To'] = user_email
 
-    except Exception as e:
-        import traceback
-        print(f"CRITICAL: Error sending welcome email: {str(e)}")
-        print(traceback.format_exc())
-        return False
+                html = f"""
+                <html>
+                <body style="font-family: 'Inter', sans-serif; background-color: #f0f4f0; padding: 40px; color: #2d3436;">
+                    <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 24px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <h1 style="color: #2d3436; font-size: 28px; font-weight: 800; letter-spacing: -0.04em; margin: 0;">Vriksha Command Center</h1>
+                            <p style="color: #636e72; font-size: 16px; margin-top: 5px;">Internal Project & Deal Tracking System</p>
+                        </div>
+                        <div style="margin-bottom: 30px;">
+                            <p style="font-size: 18px; font-weight: 600;">Hi {user_name},</p>
+                            <p style="font-size: 16px; line-height: 1.6; color: #636e72;">
+                                You’ve been granted access to the <b>Vriksha Command Center</b>.
+                            </p>
+                        </div>
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <a href="{frontend_url}" style="background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 100%); color: #2d5a27; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block;">
+                                Open Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """
+                msg.attach(MIMEText(html, 'html'))
+                server.sendmail(username, user_email, msg.as_string())
+                print(f"SUCCESS: Email sent to {user_email} via port {port}")
+                return True
+        except Exception as e:
+            print(f"DEBUG: Port {port} failed: {str(e)}")
+            last_error = e
+            continue
+
+    print(f"CRITICAL: All ports failed. Last error: {str(last_error)}")
+    return False
