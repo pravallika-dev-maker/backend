@@ -10,7 +10,9 @@ def send_welcome_email(user_email, user_name):
     """
     Sends a premium welcome email to a newly authorized user.
     """
-    # Reload env to pick up latest changes
+    print(f"DEBUG: Attempting to send welcome email to {user_email}")
+    
+    # Reload env to pick up latest changes (local test support)
     load_dotenv()
     
     server_host = os.getenv("SMTP_SERVER", "smtp.gmail.com")
@@ -19,8 +21,13 @@ def send_welcome_email(user_email, user_name):
     password = os.getenv("SMTP_PASSWORD")
     frontend_url = os.getenv("FRONTEND_URL", "https://vrikshafrontend.vercel.app")
 
+    print(f"DEBUG: SMTP_SERVER={server_host}")
+    print(f"DEBUG: SMTP_PORT={server_port}")
+    print(f"DEBUG: SMTP_USERNAME={username}")
+    print(f"DEBUG: SMTP_PASSWORD is {'SET' if password else 'MISSING'}")
+
     if not username or not password:
-        print("Email not sent: SMTP credentials not configured in environment variables.")
+        print("CRITICAL: Email not sent - SMTP credentials MISSING in environment.")
         return False
 
     try:
@@ -80,5 +87,7 @@ def send_welcome_email(user_email, user_name):
         return True
 
     except Exception as e:
-        print(f"Error sending welcome email: {str(e)}")
+        import traceback
+        print(f"CRITICAL: Error sending welcome email: {str(e)}")
+        print(traceback.format_exc())
         return False

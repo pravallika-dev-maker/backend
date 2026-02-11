@@ -36,6 +36,7 @@ def register(
     db.refresh(new_user)
     
     # Trigger Welcome Email in background
+    print(f"DEBUG: Queuing welcome email for: {new_user.email}")
     background_tasks.add_task(send_welcome_email, new_user.email, new_user.full_name)
     
     return new_user
