@@ -55,29 +55,34 @@ app = FastAPI(
 import os
 
 # CORS configuration
-# Note: allow_credentials=True requires specific origins (not "*")
-raw_origins = os.getenv("ALLOWED_ORIGINS", "").split(",")
-origins = [origin.strip() for origin in raw_origins if origin.strip()]
+# To avoid the "No Access-Control-Allow-Origin" error:
+# 1. We allow all common development origins
+# 2. We allow the production Vercel origin
+# 3. We toggle allow_credentials based on whether we use a wildcard or not
 
-# If no specific origins provided, default to common development and wildcard (warning: wildcard + credentials won't work)
-if not origins:
-    origins = [
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "https://vrikshafrontend.vercel.app",
+    "https://vriksha-command-center.vercel.app" # Adding common Vercel naming variants
+]
+
+# CORS configuration
+# Using a more robust setup to handle custom headers like X-User-Email
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
-        "*" # We will handle the credentials conflict below
-    ]
-
-# If credentials are required, we cannot use "*"
-is_wildcard_origin = "*" in origins
-allow_credentials = True if not is_wildcard_origin else False
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins if not is_wildcard_origin else ["*"],
-    allow_credentials=allow_credentials,
-    allow_methods=["*"],
-    allow_headers=["*"],
+        "https://vrikshafrontend.vercel.app",
+        "https://vriksha-command-center.vercel.app",
+        "https://vrikshadashboard.vercel.app"
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-User-Email", "Accept"],
 )
 
 # Include routers
