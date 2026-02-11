@@ -402,6 +402,8 @@ def update_project(
                 db_resource = ResourceModel(
                     resource_name=res_data.resource_name,
                     role=res_data.role,
+                    email=res_data.email,
+                    access_level=res_data.access_level or "READ",
                     assigned_record_id=record_id
                 )
                 db.add(db_resource)
