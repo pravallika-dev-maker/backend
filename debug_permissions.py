@@ -9,7 +9,7 @@ db = SessionLocal()
 print("--- USERS ---")
 users = db.query(User).all()
 for u in users:
-    print(f"User: {u.full_name}, Email: {u.email}, Role: {u.role}, Access: {u.access_level}, IS_CEO: {u.can_add_users}")
+    print(f"User: {u.full_name}, Email: {u.email}, Access: {u.access_level}, IS_CEO: {u.can_add_users}")
 
 print("\n--- PROJECTS ---")
 projects = db.query(Project).all()
