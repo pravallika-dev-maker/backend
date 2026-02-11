@@ -5,6 +5,8 @@ from app.models.user import User as UserModel
 from app.schemas.user import User, UserCreate, UserLogin
 
 from app.services.auth import require_ceo
+from app.services.email_service import send_welcome_email
+from fastapi import BackgroundTasks
 
 router = APIRouter(
     prefix="/auth",
@@ -12,7 +14,12 @@ router = APIRouter(
 )
 
 @router.post("/register", response_model=User)
-def register(user: UserCreate, db: Session = Depends(get_db), current_user: UserModel = Depends(require_ceo)):
+def register(
+    user: UserCreate, 
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db), 
+    current_user: UserModel = Depends(require_ceo)
+):
     db_user = db.query(UserModel).filter(UserModel.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already authorized")
@@ -27,6 +34,10 @@ def register(user: UserCreate, db: Session = Depends(get_db), current_user: User
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+    
+    # Trigger Welcome Email in background
+    background_tasks.add_task(send_welcome_email, new_user.email, new_user.full_name)
+    
     return new_user
 
 @router.get("/check-email/{email}")
