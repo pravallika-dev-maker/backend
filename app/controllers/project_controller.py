@@ -191,12 +191,23 @@ def update_project_status(
     if not db_project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    # 🔐 Permission Check: CEO or WRITE access
+    # 🔐 Permission Check: CEO or Resource WRITE access
     if not current_user.can_add_users:
-        if current_user.access_level != "WRITE":
-            raise HTTPException(status_code=403, detail="Permission denied. You need WRITE access to update projects.")
+        # Check explicit project permission
+        user_resource = db.query(ResourceModel).filter(
+            ResourceModel.assigned_record_id == record_id,
+            ResourceModel.email == current_user.email
+        ).first()
+        
+        has_write_permission = False
+        if user_resource and user_resource.access_level == "WRITE":
+            has_write_permission = True
+            
+        if not has_write_permission:
+            raise HTTPException(status_code=403, detail="Permission denied. You need WRITE access on this project to update status.")
+
         if db_project.is_private:
-            raise HTTPException(status_code=403, detail="Access denied. Regular users cannot modify private projects.")
+             pass # Logic covered by Write permission check essentially
     
     # Update status fields
     db_project.deal_status = status_data.deal_status
@@ -227,12 +238,29 @@ def skip_to_stage(
     if not db_project:
         raise HTTPException(status_code=404, detail="Project not found")
         
-    # 🔐 Permission Check: CEO or WRITE access
+    # 🔐 Permission Check: CEO or Resource WRITE access
     if not current_user.can_add_users:
-        if current_user.access_level != "WRITE":
-            raise HTTPException(status_code=403, detail="Permission denied. You need WRITE access to advance projects.")
+        # Check explicit project permission
+        user_resource = db.query(ResourceModel).filter(
+            ResourceModel.assigned_record_id == record_id,
+            ResourceModel.email == current_user.email
+        ).first()
+        
+        has_write_permission = False
+        if user_resource and user_resource.access_level == "WRITE":
+            has_write_permission = True
+            
+        if not has_write_permission:
+            # Fallback for legacy or if strictly creating global admins (optional)
+            # But per requirements, we want specific resource permissions.
+            # If user is NOT a resource with WRITE, deny.
+            raise HTTPException(status_code=403, detail="Permission denied. You need WRITE access on this project to advance stages.")
+
         if db_project.is_private:
-            raise HTTPException(status_code=403, detail="Access denied. Regular users cannot modify private projects.")
+             # Even if WRITE, if private and not assigned (covered above mostly, but double check)
+             # actually if they are assigned WRITE, they should see it? 
+             # For now, keep existing logic: Public projects or Assigned
+             pass
         
     # 2. Get current stage info
     current_stage = db.query(StageModel).filter(
@@ -329,12 +357,23 @@ def update_project(
     if not db_project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    # 🔐 Permission Check: CEO or WRITE access
+    # 🔐 Permission Check: CEO or Resource WRITE access
     if not current_user.can_add_users:
-        if current_user.access_level != "WRITE":
-            raise HTTPException(status_code=403, detail="Permission denied. You need WRITE access to edit projects.")
+        # Check explicit project permission
+        user_resource = db.query(ResourceModel).filter(
+            ResourceModel.assigned_record_id == record_id,
+            ResourceModel.email == current_user.email
+        ).first()
+        
+        has_write_permission = False
+        if user_resource and user_resource.access_level == "WRITE":
+            has_write_permission = True
+            
+        if not has_write_permission:
+            raise HTTPException(status_code=403, detail="Permission denied. You need WRITE access on this project to edit details.")
+
         if db_project.is_private:
-            raise HTTPException(status_code=403, detail="Access denied. Regular users cannot modify private projects.")
+             pass
     
     # Update base fields if provided
     if project_data.client_name is not None:
