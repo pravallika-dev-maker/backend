@@ -17,3 +17,5 @@ class Project(Base):
     execution_status = Column(String)
     project_started_date = Column(String)
     is_private = Column(Boolean, default=False)
+    contract_years = Column(Float, nullable=True)
+    project_category = Column(String, nullable=True)

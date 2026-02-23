@@ -14,6 +14,8 @@ class ProjectBase(BaseModel):
     execution_status: Optional[str] = None
     project_started_date: Optional[str] = None
     is_private: Optional[bool] = False
+    contract_years: Optional[float] = None
+    project_category: Optional[str] = None
 
 class ResourceCreateSimple(BaseModel):
     """Schema for creating a resource within a project request"""
@@ -33,6 +35,8 @@ class ProjectCreateRequest(BaseModel):
     next_stage_expected_date: Optional[str] = None
     parent_record_id: Optional[str] = None
     is_private: Optional[bool] = False
+    contract_years: Optional[float] = None
+    project_category: Optional[str] = None
     resources: Optional[List[ResourceCreateSimple]] = []
 
 class ProjectUpdateRequest(BaseModel):
@@ -43,6 +47,8 @@ class ProjectUpdateRequest(BaseModel):
     project_started_date: Optional[str] = None
     next_stage_expected_date: Optional[str] = None
     is_private: Optional[bool] = None
+    contract_years: Optional[float] = None
+    project_category: Optional[str] = None
     resources: Optional[List[ResourceCreateSimple]] = None
 
 class ProjectStatusUpdate(BaseModel):

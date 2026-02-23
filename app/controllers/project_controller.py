@@ -101,7 +101,9 @@ def create_project(
             next_stage_expected_date=project_data.next_stage_expected_date,
             deal_status="Open",
             execution_status="Planning",
-            is_private=project_data.is_private if current_user.can_add_users else False 
+            is_private=project_data.is_private if current_user.can_add_users else False,
+            contract_years=project_data.contract_years,
+            project_category=project_data.project_category
         )
         
         db.add(db_project)
@@ -386,6 +388,10 @@ def update_project(
         db_project.project_started_date = project_data.project_started_date
     if project_data.next_stage_expected_date is not None:
         db_project.next_stage_expected_date = project_data.next_stage_expected_date
+    if project_data.contract_years is not None:
+        db_project.contract_years = project_data.contract_years
+    if project_data.project_category is not None:
+        db_project.project_category = project_data.project_category
     
     # 🔐 Only CEO can change privacy status
     if project_data.is_private is not None and current_user.can_add_users:
