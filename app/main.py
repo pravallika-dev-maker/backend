@@ -60,7 +60,7 @@ app = FastAPI(
 
 import os
 
-# CORS configuration - Global permissive policy
+# CORS configuration - Robust Version
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -69,12 +69,11 @@ app.add_middleware(
         "http://localhost:3000",
         "https://vrikshafrontend.vercel.app",
         "https://vriksha-command-center.vercel.app",
-        "https://vrikshadashboard.vercel.app",
-        "*"
+        "https://vrikshadashboard.vercel.app"
     ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-User-Email", "Accept"],
 )
 
 # Include routers
