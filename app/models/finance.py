@@ -28,8 +28,8 @@ class CostItem(Base):
 class Fund(Base):
     __tablename__ = "funds"
 
-    # Changed from fund_id to id to match existing DB schema
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    # Changed from UUID to Integer to match existing DB schema (seen in logs: input: 1, 2, 3)
+    id = Column(Integer, primary_key=True, index=True)
     investor_name = Column(String)
     amount = Column(Numeric)
     funding_date = Column(Date)

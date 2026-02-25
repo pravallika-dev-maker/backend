@@ -62,6 +62,6 @@ class FundCreate(FundBase):
 
 class Fund(FundBase):
     # Changed from fund_id to id to match model and DB
-    id: UUID
+    id: int
 
     model_config = ConfigDict(from_attributes=True)
