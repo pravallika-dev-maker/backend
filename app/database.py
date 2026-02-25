@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 
 # Ensure we are in the 'backend' directory for the DB file
 # Check env var first, otherwise default to Supabase
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:QTFoSloCe0UxEomc@db.yibpjemrwzawgxdcnmsw.supabase.co:5432/postgres")
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres.yibpjemrwzawgxdcnmsw:QTFoSloCe0UxEomc@aws-1-ap-south-1.pooler.supabase.com:6543/postgres")
 
 # Fix for Railway/Heroku: SQLAlchemy requires postgresql://
 if SQLALCHEMY_DATABASE_URL and SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
