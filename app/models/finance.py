@@ -4,7 +4,7 @@ from app.database import Base
 class ProjectFinancial(Base):
     __tablename__ = "project_financials"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column("financial_id", Integer, primary_key=True, index=True)
     project_id = Column(String)
     project_category = Column(String)
     monthly_billing_amount = Column(Float)
@@ -15,7 +15,7 @@ class ProjectFinancial(Base):
 class CostItem(Base):
     __tablename__ = "cost_items"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column("cost_id", Integer, primary_key=True, index=True)
     cost_name = Column(String)
     cost_category = Column(String)
     monthly_amount = Column(Float)
