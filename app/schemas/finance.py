@@ -1,26 +1,25 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from uuid import UUID
+from datetime import date
 
 # =======================
 # PROJECT FINANCIAL
 # =======================
 
 class ProjectFinancialBase(BaseModel):
-    project_id: UUID   # ✅ FIX: must be UUID (not str)
+    project_id: str
     project_category: str
     monthly_billing_amount: float
     billing_owner: str
-    billing_start_date: str
-    billing_end_date: str
-
+    billing_start_date: date
+    billing_end_date: date
 
 class ProjectFinancialCreate(ProjectFinancialBase):
     pass
 
-
 class ProjectFinancial(ProjectFinancialBase):
-    financial_id: UUID   # ✅ UUID from DB
+    financial_id: UUID
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -34,13 +33,11 @@ class CostItemBase(BaseModel):
     cost_category: str
     monthly_amount: float
     owner_name: str
-    start_date: str
-    end_date: str
-
+    start_date: date
+    end_date: date
 
 class CostItemCreate(CostItemBase):
     pass
-
 
 class CostItem(CostItemBase):
     cost_id: UUID
@@ -55,15 +52,13 @@ class CostItem(CostItemBase):
 class FundBase(BaseModel):
     investor_name: str
     amount: float
-    funding_date: str
+    funding_date: date
     funding_type: str
     responsible_owner: str
     notes: Optional[str] = None
 
-
 class FundCreate(FundBase):
     pass
-
 
 class Fund(FundBase):
     fund_id: UUID
