@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
-from app.controllers import project_controller, stage_controller, resource_controller, history_controller, user_controller
+from app.controllers import project_controller, stage_controller, resource_controller, history_controller, user_controller, finance_controller
 
 from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError
@@ -82,6 +82,7 @@ app.include_router(stage_controller.router)
 app.include_router(resource_controller.router)
 app.include_router(history_controller.router)
 app.include_router(user_controller.router)
+app.include_router(finance_controller.router)
 
 @app.get("/")
 def read_root():
