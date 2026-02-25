@@ -1,21 +1,21 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Any
+from datetime import date
 
 class ProjectFinancialBase(BaseModel):
     project_id: str
     project_category: str
     monthly_billing_amount: float
     billing_owner: str
-    billing_start_date: str
-    billing_end_date: str
+    billing_start_date: Any
+    billing_end_date: Any
 
 class ProjectFinancialCreate(ProjectFinancialBase):
     pass
 
 class ProjectFinancial(ProjectFinancialBase):
-    id: int
+    id: str # UUID from database
     class Config:
-        # Support both Pydantic v1 and v2
         from_attributes = True
         orm_mode = True
 
@@ -24,14 +24,14 @@ class CostItemBase(BaseModel):
     cost_category: str
     monthly_amount: float
     owner_name: str
-    start_date: str
-    end_date: str
+    start_date: Any
+    end_date: Any
 
 class CostItemCreate(CostItemBase):
     pass
 
 class CostItem(CostItemBase):
-    id: int
+    id: str # UUID from database
     class Config:
         from_attributes = True
         orm_mode = True
@@ -39,7 +39,7 @@ class CostItem(CostItemBase):
 class FundBase(BaseModel):
     investor_name: str
     funding_amount: float
-    funding_date: str
+    funding_date: Any
     funding_type: str
     responsible_owner: str
     notes: Optional[str] = None
