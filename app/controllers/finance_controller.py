@@ -1,21 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from app.database import get_db, engine, Base
+from app.database import get_db
 from app.models.finance import ProjectFinancial, CostItem, Fund
 from app.schemas import finance as schemas
 
 router = APIRouter(prefix="/finance", tags=["finance"])
 
-# Ensure tables exist at startup for this controller
-@router.on_event("startup")
-def init_finance_tables():
-    Base.metadata.create_all(bind=engine)
-
 @router.get("/financials", response_model=List[schemas.ProjectFinancial])
 def get_financials(db: Session = Depends(get_db)):
     try:
-        return db.query(ProjectFinancial).all()
+        results = db.query(ProjectFinancial).all()
+        return results
     except Exception as e:
         print(f"Error fetching financials: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -23,7 +19,6 @@ def get_financials(db: Session = Depends(get_db)):
 @router.post("/financials", response_model=schemas.ProjectFinancial)
 def create_financial(financial: schemas.ProjectFinancialCreate, db: Session = Depends(get_db)):
     try:
-        # Use .dict() for compatibility across Pydantic v1/v2
         data = financial.dict() if hasattr(financial, 'dict') else financial.model_dump()
         db_financial = ProjectFinancial(**data)
         db.add(db_financial)

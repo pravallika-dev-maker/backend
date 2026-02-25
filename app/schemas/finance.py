@@ -1,11 +1,10 @@
 from pydantic import BaseModel
 from typing import Optional, List
-from decimal import Decimal
 
 class ProjectFinancialBase(BaseModel):
     project_id: str
     project_category: str
-    monthly_billing_amount: Decimal
+    monthly_billing_amount: float
     billing_owner: str
     billing_start_date: str
     billing_end_date: str
@@ -16,12 +15,14 @@ class ProjectFinancialCreate(ProjectFinancialBase):
 class ProjectFinancial(ProjectFinancialBase):
     id: int
     class Config:
+        # Support both Pydantic v1 and v2
         from_attributes = True
+        orm_mode = True
 
 class CostItemBase(BaseModel):
     cost_name: str
     cost_category: str
-    monthly_amount: Decimal
+    monthly_amount: float
     owner_name: str
     start_date: str
     end_date: str
@@ -33,10 +34,11 @@ class CostItem(CostItemBase):
     id: int
     class Config:
         from_attributes = True
+        orm_mode = True
 
 class FundBase(BaseModel):
     investor_name: str
-    funding_amount: Decimal
+    funding_amount: float
     funding_date: str
     funding_type: str
     responsible_owner: str
@@ -49,6 +51,7 @@ class Fund(FundBase):
     id: int
     class Config:
         from_attributes = True
+        orm_mode = True
 
 class FinanceSummary(BaseModel):
     financials: List[ProjectFinancial]
