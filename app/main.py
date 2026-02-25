@@ -34,6 +34,35 @@ def run_migrations():
                 print("Migration: Checking/Adding access_level to resources...")
                 conn.execute(text("ALTER TABLE resources ADD COLUMN IF NOT EXISTS access_level VARCHAR DEFAULT 'READ'"))
 
+                # Finance Module Migrations: Ensure all columns exist for funds, etc.
+                print("Migration: Ensuring finance tables schema is correct...")
+                # Funds Table
+                conn.execute(text("ALTER TABLE funds ADD COLUMN IF NOT EXISTS id UUID PRIMARY KEY DEFAULT gen_random_uuid()"))
+                conn.execute(text("ALTER TABLE funds ADD COLUMN IF NOT EXISTS investor_name VARCHAR"))
+                conn.execute(text("ALTER TABLE funds ADD COLUMN IF NOT EXISTS amount NUMERIC DEFAULT 0"))
+                conn.execute(text("ALTER TABLE funds ADD COLUMN IF NOT EXISTS funding_date DATE"))
+                conn.execute(text("ALTER TABLE funds ADD COLUMN IF NOT EXISTS funding_type VARCHAR"))
+                conn.execute(text("ALTER TABLE funds ADD COLUMN IF NOT EXISTS responsible_owner VARCHAR"))
+                conn.execute(text("ALTER TABLE funds ADD COLUMN IF NOT EXISTS notes TEXT"))
+
+                # Project Financials
+                conn.execute(text("ALTER TABLE project_financials ADD COLUMN IF NOT EXISTS financial_id UUID PRIMARY KEY DEFAULT gen_random_uuid()"))
+                conn.execute(text("ALTER TABLE project_financials ADD COLUMN IF NOT EXISTS project_id VARCHAR"))
+                conn.execute(text("ALTER TABLE project_financials ADD COLUMN IF NOT EXISTS project_category VARCHAR"))
+                conn.execute(text("ALTER TABLE project_financials ADD COLUMN IF NOT EXISTS monthly_billing_amount NUMERIC DEFAULT 0"))
+                conn.execute(text("ALTER TABLE project_financials ADD COLUMN IF NOT EXISTS billing_owner VARCHAR"))
+                conn.execute(text("ALTER TABLE project_financials ADD COLUMN IF NOT EXISTS billing_start_date DATE"))
+                conn.execute(text("ALTER TABLE project_financials ADD COLUMN IF NOT EXISTS billing_end_date DATE"))
+
+                # Cost Items
+                conn.execute(text("ALTER TABLE cost_items ADD COLUMN IF NOT EXISTS cost_id UUID PRIMARY KEY DEFAULT gen_random_uuid()"))
+                conn.execute(text("ALTER TABLE cost_items ADD COLUMN IF NOT EXISTS cost_name VARCHAR"))
+                conn.execute(text("ALTER TABLE cost_items ADD COLUMN IF NOT EXISTS cost_category VARCHAR"))
+                conn.execute(text("ALTER TABLE cost_items ADD COLUMN IF NOT EXISTS monthly_amount NUMERIC DEFAULT 0"))
+                conn.execute(text("ALTER TABLE cost_items ADD COLUMN IF NOT EXISTS owner_name VARCHAR"))
+                conn.execute(text("ALTER TABLE cost_items ADD COLUMN IF NOT EXISTS start_date DATE"))
+                conn.execute(text("ALTER TABLE cost_items ADD COLUMN IF NOT EXISTS end_date DATE"))
+
                 print("Migration: Making hashed_password nullable in users...")
                 # For SQLite, ALTER COLUMN is tricky, but for PostgreSQL:
                 try:
