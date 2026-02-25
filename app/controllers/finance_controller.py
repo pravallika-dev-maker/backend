@@ -10,11 +10,9 @@ router = APIRouter(prefix="/finance", tags=["finance"])
 @router.get("/financials", response_model=List[schemas.ProjectFinancial])
 def get_financials(db: Session = Depends(get_db)):
     try:
-        # Fetch directly as a list of models
         return db.query(ProjectFinancial).all()
     except Exception as e:
         print(f"Error fetching financials: {str(e)}")
-        # If the failure is due to table not existing yet on this env
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 @router.post("/financials", response_model=schemas.ProjectFinancial)
@@ -30,6 +28,14 @@ def create_financial(financial: schemas.ProjectFinancialCreate, db: Session = De
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/costs", response_model=List[schemas.CostItem])
+def get_costs(db: Session = Depends(get_db)):
+    try:
+        return db.query(ProjectFinancial).all() # Just double checking the query logic
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+# Wait, I noticed a typo in the line above in my previous thought process, fixing it now:
 @router.get("/costs", response_model=List[schemas.CostItem])
 def get_costs(db: Session = Depends(get_db)):
     try:

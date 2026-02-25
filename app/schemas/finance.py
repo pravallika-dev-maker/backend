@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 from typing import Optional, List, Any
-from datetime import date
 
 class ProjectFinancialBase(BaseModel):
     project_id: str
@@ -14,7 +13,7 @@ class ProjectFinancialCreate(ProjectFinancialBase):
     pass
 
 class ProjectFinancial(ProjectFinancialBase):
-    id: str # UUID from database
+    financial_id: str 
     class Config:
         from_attributes = True
         orm_mode = True
@@ -31,7 +30,7 @@ class CostItemCreate(CostItemBase):
     pass
 
 class CostItem(CostItemBase):
-    id: str # UUID from database
+    cost_id: str 
     class Config:
         from_attributes = True
         orm_mode = True
@@ -52,8 +51,3 @@ class Fund(FundBase):
     class Config:
         from_attributes = True
         orm_mode = True
-
-class FinanceSummary(BaseModel):
-    financials: List[ProjectFinancial]
-    costs: List[CostItem]
-    funds: List[Fund]

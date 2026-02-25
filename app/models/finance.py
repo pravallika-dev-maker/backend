@@ -4,7 +4,7 @@ from app.database import Base
 class ProjectFinancial(Base):
     __tablename__ = "project_financials"
 
-    id = Column("financial_id", String, primary_key=True, index=True)
+    financial_id = Column(String, primary_key=True, index=True)
     project_id = Column(String)
     project_category = Column(String)
     monthly_billing_amount = Column(Float)
@@ -15,7 +15,7 @@ class ProjectFinancial(Base):
 class CostItem(Base):
     __tablename__ = "cost_items"
 
-    id = Column("cost_id", String, primary_key=True, index=True)
+    cost_id = Column(String, primary_key=True, index=True)
     cost_name = Column(String)
     cost_category = Column(String)
     monthly_amount = Column(Float)
@@ -29,7 +29,7 @@ class Fund(Base):
     id = Column(Integer, primary_key=True, index=True)
     investor_name = Column(String)
     funding_amount = Column(Float)
-    funding_date = Column(String)
+    funding_date = Column(String) # Stored as text in setup script
     funding_type = Column(String)
     responsible_owner = Column(String)
     notes = Column(String)
