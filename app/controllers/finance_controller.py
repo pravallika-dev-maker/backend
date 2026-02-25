@@ -2,76 +2,51 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
-from app.models.finance import ProjectFinancial, CostItem, Fund
-from app.schemas import finance as schemas
+from app.models.finance import ProjectFinancial as PFModel, CostItem as CIModel, Fund as FundModel
+from app.schemas.finance import ProjectFinancial, ProjectFinancialCreate, CostItem, CostItemCreate, Fund, FundCreate
+from app.services.auth import get_current_user, require_ceo
+from app.models.user import User as UserModel
 
-router = APIRouter(prefix="/finance", tags=["finance"])
+router = APIRouter(
+    prefix="/finance",
+    tags=["finance"]
+)
 
-@router.get("/financials", response_model=List[schemas.ProjectFinancial])
-def get_financials(db: Session = Depends(get_db)):
-    try:
-        return db.query(ProjectFinancial).all()
-    except Exception as e:
-        print(f"Error fetching financials: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+@router.get("/financials", response_model=List[ProjectFinancial])
+def get_financials(db: Session = Depends(get_db), current_user: UserModel = Depends(require_ceo)):
+    return db.query(PFModel).all()
 
-@router.post("/financials", response_model=schemas.ProjectFinancial)
-def create_financial(financial: schemas.ProjectFinancialCreate, db: Session = Depends(get_db)):
-    try:
-        data = financial.dict() if hasattr(financial, 'dict') else financial.model_dump()
-        db_obj = ProjectFinancial(**data)
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
-        return db_obj
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+@router.post("/financials", response_model=ProjectFinancial)
+def create_financial(fin: ProjectFinancialCreate, db: Session = Depends(get_db), current_user: UserModel = Depends(require_ceo)):
+    # Use model_dump() for Pydantic V2 compatibility
+    db_fin = PFModel(**fin.model_dump())
+    db.add(db_fin)
+    db.commit()
+    db.refresh(db_fin)
+    return db_fin
 
-@router.get("/costs", response_model=List[schemas.CostItem])
-def get_costs(db: Session = Depends(get_db)):
-    try:
-        return db.query(ProjectFinancial).all() # Just double checking the query logic
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+@router.get("/costs", response_model=List[CostItem])
+def get_costs(db: Session = Depends(get_db), current_user: UserModel = Depends(require_ceo)):
+    return db.query(CIModel).all()
 
-# Wait, I noticed a typo in the line above in my previous thought process, fixing it now:
-@router.get("/costs", response_model=List[schemas.CostItem])
-def get_costs(db: Session = Depends(get_db)):
-    try:
-        return db.query(CostItem).all()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+@router.post("/costs", response_model=CostItem)
+def create_cost(cost: CostItemCreate, db: Session = Depends(get_db), current_user: UserModel = Depends(require_ceo)):
+    # Use model_dump() for Pydantic V2 compatibility
+    db_cost = CIModel(**cost.model_dump())
+    db.add(db_cost)
+    db.commit()
+    db.refresh(db_cost)
+    return db_cost
 
-@router.post("/costs", response_model=schemas.CostItem)
-def create_cost(cost: schemas.CostItemCreate, db: Session = Depends(get_db)):
-    try:
-        data = cost.dict() if hasattr(cost, 'dict') else cost.model_dump()
-        db_obj = CostItem(**data)
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
-        return db_obj
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+@router.get("/funds", response_model=List[Fund])
+def get_funds(db: Session = Depends(get_db), current_user: UserModel = Depends(require_ceo)):
+    return db.query(FundModel).all()
 
-@router.get("/funds", response_model=List[schemas.Fund])
-def get_funds(db: Session = Depends(get_db)):
-    try:
-        return db.query(Fund).all()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-
-@router.post("/funds", response_model=schemas.Fund)
-def create_fund(fund: schemas.FundCreate, db: Session = Depends(get_db)):
-    try:
-        data = fund.dict() if hasattr(fund, 'dict') else fund.model_dump()
-        db_obj = Fund(**data)
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
-        return db_obj
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+@router.post("/funds", response_model=Fund)
+def create_fund(fund: FundCreate, db: Session = Depends(get_db), current_user: UserModel = Depends(require_ceo)):
+    # Use model_dump() for Pydantic V2 compatibility
+    db_fund = FundModel(**fund.model_dump())
+    db.add(db_fund)
+    db.commit()
+    db.refresh(db_fund)
+    return db_fund

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
 from app.controllers import project_controller, stage_controller, resource_controller, history_controller, user_controller, finance_controller
+from app.models import finance # Ensure models are loaded for create_all
 
 from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError
