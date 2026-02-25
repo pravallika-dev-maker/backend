@@ -50,18 +50,17 @@ class CostItem(CostItemBase):
 # =======================
 
 class FundBase(BaseModel):
-    investor_name: str
-    amount: float
-    funding_date: date
-    funding_type: str
-    responsible_owner: str
+    investor_name: Optional[str] = None
+    amount_raised: Optional[float] = 0
+    funding_date: Optional[date] = None
+    funding_type: Optional[str] = None
+    owner_responsible: Optional[str] = None
     notes: Optional[str] = None
 
 class FundCreate(FundBase):
     pass
 
 class Fund(FundBase):
-    # Changed from fund_id to id to match model and DB
     id: int
 
     model_config = ConfigDict(from_attributes=True)

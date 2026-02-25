@@ -36,14 +36,49 @@ def run_migrations():
 
                 # Finance Module Migrations: Ensure all columns exist for funds, etc.
                 print("Migration: Ensuring finance tables schema is correct...")
-                # Funds Table
-                conn.execute(text("ALTER TABLE funds ADD COLUMN IF NOT EXISTS id UUID PRIMARY KEY DEFAULT gen_random_uuid()"))
+                # Funds Table — Add new columns if missing
                 conn.execute(text("ALTER TABLE funds ADD COLUMN IF NOT EXISTS investor_name VARCHAR"))
-                conn.execute(text("ALTER TABLE funds ADD COLUMN IF NOT EXISTS amount NUMERIC DEFAULT 0"))
                 conn.execute(text("ALTER TABLE funds ADD COLUMN IF NOT EXISTS funding_date DATE"))
                 conn.execute(text("ALTER TABLE funds ADD COLUMN IF NOT EXISTS funding_type VARCHAR"))
-                conn.execute(text("ALTER TABLE funds ADD COLUMN IF NOT EXISTS responsible_owner VARCHAR"))
                 conn.execute(text("ALTER TABLE funds ADD COLUMN IF NOT EXISTS notes TEXT"))
+
+                # Rename old column 'amount' -> 'amount_raised' if it exists and new one doesn't
+                try:
+                    conn.execute(text("""
+                        DO $$
+                        BEGIN
+                            IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='funds' AND column_name='amount')
+                            AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='funds' AND column_name='amount_raised')
+                            THEN
+                                ALTER TABLE funds RENAME COLUMN amount TO amount_raised;
+                            END IF;
+                        END$$;
+                    """))
+                    print("Migration: Renamed 'amount' to 'amount_raised' in funds (if needed).")
+                except Exception as e:
+                    print(f"Migration note (amount rename): {e}")
+
+                # Add amount_raised if still missing after rename attempt
+                conn.execute(text("ALTER TABLE funds ADD COLUMN IF NOT EXISTS amount_raised NUMERIC DEFAULT 0"))
+
+                # Rename old column 'responsible_owner' -> 'owner_responsible' if it exists
+                try:
+                    conn.execute(text("""
+                        DO $$
+                        BEGIN
+                            IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='funds' AND column_name='responsible_owner')
+                            AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='funds' AND column_name='owner_responsible')
+                            THEN
+                                ALTER TABLE funds RENAME COLUMN responsible_owner TO owner_responsible;
+                            END IF;
+                        END$$;
+                    """))
+                    print("Migration: Renamed 'responsible_owner' to 'owner_responsible' in funds (if needed).")
+                except Exception as e:
+                    print(f"Migration note (responsible_owner rename): {e}")
+
+                # Add owner_responsible if still missing after rename attempt
+                conn.execute(text("ALTER TABLE funds ADD COLUMN IF NOT EXISTS owner_responsible VARCHAR"))
 
                 # Project Financials
                 conn.execute(text("ALTER TABLE project_financials ADD COLUMN IF NOT EXISTS financial_id UUID PRIMARY KEY DEFAULT gen_random_uuid()"))
